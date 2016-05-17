@@ -16,6 +16,8 @@ group :development, :production do
 end
 
 gem 'voyager_helpers', git: 'git@github.com:pulibrary/voyager_helpers.git', :tag => 'v0.1.2'
+# CUL local version?
+# gem 'voyager_helpers', path: '/Users/marquis/src/voyager_helpers'
 
 gem 'responders', '~> 2.0'
 gem 'marc', '~> 1.0'
@@ -28,6 +30,13 @@ gem 'rubyzip', '>= 1.0.0'
 group :development do
   gem 'spring'
   gem 'capistrano-rails', '~> 1.1.1'
+
+  # CUL
+  # "idiomatic support for your preferred ruby version manager"
+  gem 'capistrano-rvm'
+  # The `deploy:restart` hook for passenger applications is now in a separate gem
+  # Just add it to your Gemfile and require it in your Capfile.
+  gem 'capistrano-passenger'
 end
 
 group :development, :test do
@@ -35,6 +44,9 @@ group :development, :test do
   gem 'rspec-rails', '~> 3.0.0'
   gem 'byebug', '~> 3.5.1'
   gem 'rerun', '~> 0.10.0'
+
+  # CUL - localhost development uses sqlite
+  gem 'sqlite3'
 end
 
 gem 'locations', git: 'git@github.com:pulibrary/locations.git', :tag => '0.2.1'
