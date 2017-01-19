@@ -37,7 +37,10 @@ module FormattingConcern
   end
 
   def valid_barcode?(barcode)
-    (barcode =~ /^(32101[0-9]{9}|PULTST[0-9]{5})$/) == 0
+    # This pattern is PUL-specific
+    # (barcode =~ /^(32101[0-9]{9}|PULTST[0-9]{5})$/) == 0
+    # What are the CUL rules?  Unknown, accept everything for now.
+    true
   end
 
   def statuses_to_xml(data)
