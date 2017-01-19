@@ -38,9 +38,7 @@ set :linked_files, %w{
 # Default value for linked_dirs is []
 set :linked_dirs, %w{
   log
-  tmp/pids 
-  tmp/cache 
-  tmp/sockets
+  tmp
   vendor/bundle
   public/system
 }
