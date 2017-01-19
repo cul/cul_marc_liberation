@@ -1,10 +1,12 @@
 class JSONLDRecord
-  def initialize(solr_doc)
+  def initialize(solr_doc = {})
     @solr_doc = solr_doc
   end
 
   def to_h
-    metadata = { title: title, description: description, language: language_codes }
+    metadata = {}
+    metadata[:title] = title if title
+    metadata[:language] = iso_codes unless iso_codes.empty?
 
     metadata_map.each do |solr_key, metadata_key|
       values = @solr_doc[solr_key.to_s] || []
@@ -14,8 +16,9 @@ class JSONLDRecord
 
     metadata.merge! contributors
     metadata.merge! creator
-    metadata['created'] = date(true)
-    metadata['date'] = date
+    metadata['created'] = date(true) if date(true)
+    metadata['date'] = date if date
+    metadata['abstract'] = abstract if abstract
 
     metadata
   end
@@ -42,6 +45,7 @@ class JSONLDRecord
   end
 
   def date(expanded = false)
+    return unless @solr_doc['pub_date_start_sort']
     date = @solr_doc['pub_date_start_sort'].first
     date += "-01-01T00:00:00Z" if expanded
     end_date = @solr_doc['pub_date_end_sort'] || []
@@ -52,53 +56,59 @@ class JSONLDRecord
     date
   end
 
-  def description
-    (@solr_doc['summary_note_display'] || [""]).first
+  def abstract
+    (@solr_doc['summary_note_display'] || []).first
   end
 
-  def language_codes
-    lang = @solr_doc['language_code_s']
-    @solr_doc['language_facet'].each do |label|
-      lang << LanguageService.label_to_iso(label) unless label == 'Multiple'
-    end
-    lang = lang.uniq
+  def iso_codes
+    lang = language_codes.map { |l| LanguageService.loc_to_iso(l) }.compact.uniq
     lang.size == 1 ? lang.first : lang
   end
 
   def title
-    vernacular_title.nil? ? roman_title : [ vernacular_title, roman_title ]
+    return [ vernacular_title, roman_title ] unless vernacular_title.nil?
+    roman_title unless roman_title.nil?
   end
 
   def vernacular_title
-    vtitle = Traject::Macros::Marc21.trim_punctuation (@solr_doc['title_citation_display'] || []).second
-    return { "@value": vtitle, "@language": title_language } if vtitle
+    @vernacular_title ||= begin
+      vtitle = Traject::Macros::Marc21.trim_punctuation (@solr_doc['title_citation_display'] || []).second
+      { "@value": vtitle, "@language": title_language } if vtitle
+    end
   end
 
   def roman_title
     lang = vernacular_title.nil? ? title_language : title_language + "-Latn"
-    { "@value": roman_display_title, "@language": lang }
+    { "@value": roman_display_title, "@language": lang } if roman_display_title
   end
 
   def roman_display_title
+    return unless @solr_doc['title_citation_display']
     Traject::Macros::Marc21.trim_punctuation @solr_doc['title_citation_display'].first
   end
 
   def title_language
-    lang = @solr_doc['language_code_s'].first
-    return LanguageService.label_to_iso(@solr_doc['language_facet'].second) if lang == 'mul'
-    return LanguageService.loc_to_iso(lang)
+    lang = language_codes.first
+    LanguageService.loc_to_iso(lang)
   end
 
   def metadata_map
     {
       author_display:        'creator',
-      description_display:   'description',
+      call_number_display:   'call_number',
+      description_display:   'extent',
       edition_display:       'edition',
       format:                'format',
-      genre_facet:           'genre',
-      notes_display:         'note',
+      genre_facet:           'type',
+      notes_display:         'description',
       pub_created_display:   'publisher',
       subject_facet:         'subject'
     }
   end
+
+  private
+
+    def language_codes
+      (@solr_doc['language_code_s'] || []).reject { |l| l == 'mul' }
+    end
 end

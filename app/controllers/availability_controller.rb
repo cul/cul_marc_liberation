@@ -78,26 +78,54 @@ class AvailabilityController < ApplicationController
     ['Not Charged', 'On Shelf']
   end
 
+  def order_statuses
+    ['Order Received', 'Pending Order', 'On-Order']
+  end
+
+  def on_site
+    'On-Site'
+  end
+
+  def order_status?(status)
+    !order_statuses.select { |s| status.match(s) }.empty?
+  end
+
+  def always_requestable_status(status)
+    if order_status?(status)
+      status
+    elsif !available_statuses.include?(status)
+      %(#{on_site} - #{status})
+    else
+      on_site
+    end
+  end
+
+  def non_circulating_status(status)
+    if available_statuses.include?(status)
+      on_site
+    else
+      status
+    end
+  end
+
   # non-circulating items that are available should have status 'limited'
   # always requestable non-circulating items should always have 'limited' status,
   # even with unavailable Voyager status
   def location_based_status(loc, status)
-    if loc.always_requestable or (!loc.circulates and available_statuses.include?(status))
-      'Limited'
+    if loc.always_requestable
+      always_requestable_status(status)
+    elsif !loc.circulates
+      non_circulating_status(status)
     else
       status
     end
   end
 
   def update_item_loc(item)
-    loc = get_holding_location(item[:on_reserve] || item[:location])
+    loc = get_holding_location(item[:temp_loc] || item[:location])
     unless loc.nil?
-      if item[:on_reserve]
-        item[:temp_loc] = item[:on_reserve]
-        item[:on_reserve] = location_full_display(loc)
-      end
+      item[:label] = location_full_display(loc)
       item[:status] = location_based_status(loc, item[:status])
     end
   end
-
 end

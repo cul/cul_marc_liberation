@@ -5,12 +5,15 @@ RSpec.describe JSONLDRecord, :type => :model do
     let(:solr_doc) {{
       'title_citation_display'     => ['This is the Title'],
       'summary_note_display'       => ['This is a note about it.'],
+      'notes_display'              => ['This is another note.'],
+      'description_display'        => ['340 p., ill., 24 cm'],
       'pub_date_display'           => ['1970'],
       'pub_date_start_sort'        => ['1970'],
       'pub_date_end_sort'          => ['1972'],
       'pub_created_display'        => ['New York : Farrar, Straus Giroux, 1970.'],
-      'language_facet'             => ['English', 'Spanish', 'Chinese'],
-      'language_code_s'            => ['eng'],
+      'call_number_display'        => ['ND623.C3 M8'],
+      'genre_facet'                => ['Biography'],
+      'language_code_s'            => ['eng', 'spa', 'chi'],
       'author_display'             => ['Author, Alice'],
       'related_name_json_1display' => ['{"Translators":["Translator, Bob", "Translator, Carol"],"Former owner":["Translator, Carol"],"Related name":["Contributor, Donald"]}']
     }}
@@ -19,10 +22,14 @@ RSpec.describe JSONLDRecord, :type => :model do
     it 'produces json+ld' do
       json_ld = {
         title: {'@value':'This is the Title', '@language':'eng'},
-        description: 'This is a note about it.',
+        abstract: 'This is a note about it.',
+        description: 'This is another note.',
+        extent: '340 p., ill., 24 cm',
         creator: 'Author, Alice',
         date: '1970-1972',
         created: '1970-01-01T00:00:00Z/1972-12-31T23:59:59Z',
+        call_number: 'ND623.C3 M8',
+        type: 'Biography',
         language: ['eng', 'spa', 'zho'],
         publisher: 'New York : Farrar, Straus Giroux, 1970.',
         contributor: ['Contributor, Donald'],
@@ -49,10 +56,62 @@ RSpec.describe JSONLDRecord, :type => :model do
         title: {'@value':'This is the Title', '@language': 'eng'},
         date: '1970',
         created: '1970-01-01T00:00:00Z',
-        description: '',
         language: 'eng',
         creator: 'Composer, Carol',
         composer: 'Composer, Carol'
+      }
+      expect(subject.to_h.symbolize_keys).to eq(json_ld)
+    end
+  end
+
+  context 'without dates' do
+    let(:solr_doc) {{
+      'title_citation_display'     => ['This is the Title'],
+      'language_facet'             => ['English'],
+      'language_code_s'            => ['eng'],
+      'author_display'             => ['Composer, Carol'],
+      'marc_relator_display'       => ['Composer']
+    }}
+    subject { described_class.new solr_doc }
+
+    it 'maps the creator to dc:creator and the more specific role' do
+      json_ld = {
+        title: {'@value':'This is the Title', '@language': 'eng'},
+        language: 'eng',
+        creator: 'Composer, Carol',
+        composer: 'Composer, Carol'
+      }
+      expect(subject.to_h.symbolize_keys).to eq(json_ld)
+    end
+  end
+
+  context 'without any data' do
+    subject { described_class.new }
+
+    it 'maps the creator to dc:creator and the more specific role' do
+      expect { described_class.new }.to_not raise_error
+      expect(described_class.new.to_h).to eq({})
+    end
+  end
+
+  context 'with vernacular title' do
+    let(:solr_doc) {{
+      'title_citation_display'     => ['Kitāb al-Manāhil al-ṣāfīyah /', 'كتاب المناهل الصافية /'],
+      'language_facet'             => ['Arabic'],
+      'language_code_s'            => ['ara'],
+      'author_display'             => ['Ẓufayrī, Luṭf Allāh ibn Muḥammad, 1570-1626',
+                                       'ظفيري، لطف الله بن محمد'],
+      'marc_relator_display'       => ['Author']
+    }}
+    subject { described_class.new solr_doc }
+
+    it 'includes both the vernacular and english titles' do
+      json_ld = {
+        title: [{'@value':'كتاب المناهل الصافية', '@language': 'ara'},
+                {'@value':'Kitāb al-Manāhil al-ṣāfīyah', '@language': 'ara-Latn'}],
+        language: 'ara',
+        creator: ['Ẓufayrī, Luṭf Allāh ibn Muḥammad, 1570-1626', 'ظفيري، لطف الله بن محمد'],
+        author: 'Ẓufayrī, Luṭf Allāh ibn Muḥammad, 1570-1626'
       }
       expect(subject.to_h.symbolize_keys).to eq(json_ld)
     end

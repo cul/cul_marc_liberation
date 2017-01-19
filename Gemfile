@@ -15,7 +15,8 @@ group :development, :production do
   gem 'ruby-oci8', '~> 2.2.1'
 end
 
-gem 'voyager_helpers', git: 'git@github.com:pulibrary/voyager_helpers.git', :tag => 'v0.1.2'
+# gem 'voyager_helpers', git: 'git@github.com:pulibrary/voyager_helpers.git', :tag => 'v0.1.2'
+gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.0'
 # CUL local version?
 # gem 'voyager_helpers', path: '/Users/marquis/src/voyager_helpers'
 
@@ -24,6 +25,7 @@ gem 'marc', '~> 1.0'
 gem 'rack-conneg', '~> 0.1.5'
 gem 'sinatra', '~> 1.4.5'
 gem 'multi_json', '~> 1.10.1'
+gem 'oj'
 gem 'gyoku', '~> 1.0'
 gem 'rubyzip', '>= 1.0.0'
 
@@ -41,7 +43,8 @@ end
 
 group :development, :test do
   # bundler and rake come in from the voyager_helpers gemspec
-  gem 'rspec-rails', '~> 3.0.0'
+  gem 'rspec-rails', '~> 3.5'
+  gem 'simplecov'
   gem 'byebug', '~> 3.5.1'
   gem 'rerun', '~> 0.10.0'
 
@@ -49,17 +52,19 @@ group :development, :test do
   gem 'sqlite3'
 end
 
-gem 'locations', git: 'git@github.com:pulibrary/locations.git', :tag => '0.2.1'
+gem 'locations', github: "pulibrary/locations", tag: '0.5.0'
 gem 'yaml_db', '~> 0.3.0'
 gem 'friendly_id', '~> 5.1.0'
 
-gem 'devise'
+gem 'devise', '~> 4.2'
 gem 'omniauth-cas'
 gem 'capybara'
 gem 'poltergeist'
 gem 'resque'
 
-gem 'traject', '~> 2.0'
-gem 'stringex', :git => 'https://github.com/pulibrary/stringex.git', :tag => 'vpton.2.5.2.2'
+gem 'traject', '2.3.1'
+gem 'stringex', github: "pulibrary/stringex", tag: 'vpton.2.5.2.2'
 gem 'library_stdnums'
 gem 'faraday'
+gem 'iso-639'
+gem 'newrelic_rpm'

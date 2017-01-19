@@ -41,6 +41,7 @@ set :linked_dirs, %w{
   tmp
   vendor/bundle
   public/system
+  log
 }
 
 

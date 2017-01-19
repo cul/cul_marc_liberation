@@ -63,8 +63,6 @@ RSpec.describe AvailabilityController, :type => :controller do
     end
 
     it 'limited access location on-order records have a status of On-Order' do
-      allow(VoyagerHelpers::Liberator).to receive(:get_item_ids_for_holding).and_return([])
-      allow(VoyagerHelpers::Liberator).to receive(:get_order_status).and_return('On-Order')
       allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9355531"=>{:more_items=>false, :location=>"sa", :status=>"On-Order"}})
       marquand = '9497429'
       get :index, id: marquand, format: :json
@@ -74,8 +72,18 @@ RSpec.describe AvailabilityController, :type => :controller do
       expect(value['status']).to include('On-Order')
     end
 
+    it 'items without a temp_loc have a location display label' do
+      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9355531"=>{:more_items=>false, :location=>"sa", :status=>"On-Order"}})
+      allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_always_req)
+      marquand = '9497429'
+      get :index, id: marquand, format: :json
+      availability = JSON.parse(response.body)
+      key, value = availability.first
+      expect(value['temp_loc']).to be nil
+      expect(value['label']).to eq 'Library'
+    end
+
     it 'online on-order records have a status of On-Order' do
-      allow(VoyagerHelpers::Liberator).to receive(:get_order_status).and_return('On-Order')
       allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9096471"=>{:more_items=>false, :location=>"elf1", :status=>"On-Order"}})
       online = '9226664'
       get :index, id: online, format: :json
@@ -93,28 +101,46 @@ RSpec.describe AvailabilityController, :type => :controller do
       expect(availability.first[1]['status']).to include('Order Received')
     end
 
-    describe 'Non circulating locations' do
-      it 'non_circulating, always_requestable locations have a status of limited' do
+    describe 'location-based availability' do
+      it 'always_requestable locations should display order information status' do
         allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_always_req)
-        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"On Shelf"}, "4848993"=>{:more_items=>false, :location=>"whs", :status=>"Limited"}}})
+        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"Order Received 12-16-2015"}}})
         bible = '4609321'
         holding_id = '4847980'
         get :index, ids: [bible], format: :json
         availability = JSON.parse(response.body)
-        expect(availability[bible][holding_id]['status']).to eq('Limited')
+        expect(availability[bible][holding_id]['status']).to include('Order Received')
       end
-      it 'non_circulating, non always_requestable locations have a status of limited when available' do
-        allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_non_circ)
-        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"On Shelf"}, "4848993"=>{:more_items=>false, :location=>"whs", :status=>"Limited"}}})
+      it 'non_circulating, always_requestable locations have a status of on-site when available' do
+        allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_always_req)
+        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"On Shelf"}}})
         bible = '4609321'
         holding_id = '4847980'
         get :index, ids: [bible], format: :json
         availability = JSON.parse(response.body)
-        expect(availability[bible][holding_id]['status']).to eq('Limited')
+        expect(availability[bible][holding_id]['status']).to eq(controller.send(:on_site))
+      end
+      it 'non_circulating, always_requestable locations include status when unavailable' do
+        allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_always_req)
+        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"Unavailable"}}})
+        bible = '4609321'
+        holding_id = '4847980'
+        get :index, ids: [bible], format: :json
+        availability = JSON.parse(response.body)
+        expect(availability[bible][holding_id]['status']).to include(controller.send(:on_site), 'Unavailable')
+      end
+      it 'non_circulating, non always_requestable locations have a status of on-site when available' do
+        allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_non_circ)
+        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"On Shelf"}}})
+        bible = '4609321'
+        holding_id = '4847980'
+        get :index, ids: [bible], format: :json
+        availability = JSON.parse(response.body)
+        expect(availability[bible][holding_id]['status']).to eq(controller.send(:on_site))
       end
       it 'non_circulating, non always_requestable locations display non-available statuses' do
         allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_non_circ)
-        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"Unavailable"}, "4848993"=>{:more_items=>false, :location=>"whs", :status=>"Limited"}}})
+        allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"4609321"=>{"4847980"=>{:more_items=>false, :location=>"whs", :status=>"Unavailable"}}})
         bible = '4609321'
         holding_id = '4847980'
         get :index, ids: [bible], format: :json
@@ -126,7 +152,7 @@ RSpec.describe AvailabilityController, :type => :controller do
     it 'Items with temp location codes are have a temp_loc key' do
       allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_label)
       temp_loc = 'woooo'
-      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9329199"=>{:more_items=>false, :location=>"f", :on_reserve=>temp_loc, :status=>"Charged"}})
+      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9329199"=>{:more_items=>false, :location=>"f", :temp_loc=>temp_loc, :status=>"Charged"}})
       bib_received_order = '9468468'
       get :index, id: bib_received_order, format: :json
       availability = JSON.parse(response.body)
@@ -135,20 +161,20 @@ RSpec.describe AvailabilityController, :type => :controller do
 
     it 'Items with temp location codes are mapped the display value' do
       allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_label)
-      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9329199"=>{:more_items=>false, :location=>"f", :on_reserve=>'woooo', :status=>"Charged"}})
+      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9329199"=>{:more_items=>false, :location=>"f", :temp_loc=>'woooo', :status=>"Charged"}})
       bib_received_order = '9468468'
       get :index, id: bib_received_order, format: :json
       availability = JSON.parse(response.body)
-      expect(availability.first[1]['on_reserve']).to include(holding_loc_label.label, holding_loc_label.library.label)
+      expect(availability.first[1]['label']).to include(holding_loc_label.label, holding_loc_label.library.label)
     end
 
-    it 'temp location codes with no holding locl label display on library name' do
+    it 'temp location codes with no holding loc label display on library name' do
       allow_any_instance_of(described_class).to receive(:get_holding_location).and_return(holding_loc_non_circ)
-      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9329199"=>{:more_items=>false, :location=>"f", :on_reserve=>'woooo', :status=>"Charged"}})
+      allow(VoyagerHelpers::Liberator).to receive(:get_availability).and_return({"9329199"=>{:more_items=>false, :location=>"f", :temp_loc=>'woooo', :status=>"Charged"}})
       bib_received_order = '9468468'
       get :index, id: bib_received_order, format: :json
       availability = JSON.parse(response.body)
-      expect(availability.first[1]['on_reserve']).to eq(holding_loc_non_circ.library.label)
+      expect(availability.first[1]['label']).to eq(holding_loc_non_circ.library.label)
     end
 
     it 'all other holding records without items have a status of On Shelf' do
