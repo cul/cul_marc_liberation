@@ -95,16 +95,16 @@ ActiveRecord::Schema.define(version: 20170103045037) do
   add_index "locations_delivery_locations", ["locations_library_id"], name: "index_locations_delivery_locations_on_locations_library_id"
 
   create_table "locations_floors", force: :cascade do |t|
-    t.string   "label",                limit: 255
-    t.string   "floor_plan_image",     limit: 255
-    t.string   "starting_point",       limit: 255
-    t.string   "walkable_areas",       limit: 255
-    t.datetime "created_at",                       null: false
-    t.datetime "updated_at",                       null: false
-    t.integer  "locations_library_id", limit: 4
+    t.string   "label"
+    t.string   "floor_plan_image"
+    t.string   "starting_point"
+    t.string   "walkable_areas"
+    t.datetime "created_at",           null: false
+    t.datetime "updated_at",           null: false
+    t.integer  "locations_library_id"
   end
 
-  add_index "locations_floors", ["locations_library_id"], name: "index_locations_floors_on_locations_library_id", using: :btree
+  add_index "locations_floors", ["locations_library_id"], name: "index_locations_floors_on_locations_library_id"
 
   create_table "locations_holding_locations", force: :cascade do |t|
     t.string   "label"
@@ -119,6 +119,7 @@ ActiveRecord::Schema.define(version: 20170103045037) do
     t.boolean  "always_requestable",                 default: false
     t.integer  "locations_hours_location_id"
     t.boolean  "circulates",                         default: true
+    t.integer  "holding_library_id"
   end
 
   add_index "locations_holding_locations", ["locations_library_id"], name: "index_locations_holding_locations_on_locations_library_id"
@@ -141,8 +142,9 @@ ActiveRecord::Schema.define(version: 20170103045037) do
   create_table "locations_libraries", force: :cascade do |t|
     t.string   "label"
     t.string   "code"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+    t.integer  "order",      default: 0
   end
 
   create_table "users", force: :cascade do |t|
@@ -167,9 +169,4 @@ ActiveRecord::Schema.define(version: 20170103045037) do
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   add_index "users", ["username"], name: "index_users_on_username"
 
-  add_foreign_key "locations_delivery_locations", "locations_libraries"
-  add_foreign_key "locations_floors", "locations_libraries"
-  add_foreign_key "locations_holding_locations", "locations_hours_locations"
-  add_foreign_key "locations_holding_locations", "locations_libraries"
-  add_foreign_key "locations_holding_locations", "locations_libraries", column: "holding_library_id"
 end
