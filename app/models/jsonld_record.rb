@@ -19,6 +19,7 @@ class JSONLDRecord
     metadata['created'] = date(true) if date(true)
     metadata['date'] = date if date
     metadata['abstract'] = abstract if abstract
+    metadata['identifier'] = identifier if identifier
 
     metadata
   end
@@ -45,6 +46,9 @@ class JSONLDRecord
   end
 
   def date(expanded = false)
+    if expanded == false && @solr_doc['compiled_created_display']
+      return @solr_doc['compiled_created_display'].first
+    end
     return unless @solr_doc['pub_date_start_sort']
     date = @solr_doc['pub_date_start_sort'].first
     date += "-01-01T00:00:00Z" if expanded
@@ -79,7 +83,10 @@ class JSONLDRecord
 
   def roman_title
     lang = vernacular_title.nil? ? title_language : title_language + "-Latn"
-    { "@value": roman_display_title, "@language": lang } if roman_display_title
+    if roman_display_title
+      return roman_display_title unless lang
+      return { "@value": roman_display_title, "@language": lang }
+    end
   end
 
   def roman_display_title
@@ -92,6 +99,12 @@ class JSONLDRecord
     LanguageService.loc_to_iso(lang)
   end
 
+  def identifier
+    return unless @solr_doc['electronic_access_1display']
+    json = JSON.parse(@solr_doc['electronic_access_1display'].first)
+    return json.index(['arks.princeton.edu'])
+  end
+
   def metadata_map
     {
       author_display:        'creator',
@@ -102,7 +115,13 @@ class JSONLDRecord
       genre_facet:           'type',
       notes_display:         'description',
       pub_created_display:   'publisher',
-      subject_facet:         'subject'
+      subject_facet:         'subject',
+      coverage_display:      'coverage',
+      title_sort:            'title_sort',
+      alt_title_246_display: 'alternative',
+      scale_display:         'cartographic_scale',
+      projection_display:    'cartographic_projection',
+      geocode_display:       'spatial'
     }
   end
 

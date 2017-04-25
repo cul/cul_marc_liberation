@@ -15,11 +15,15 @@ group :development, :production do
   gem 'ruby-oci8', '~> 2.2.1'
 end
 
+<<<<<<< HEAD
 # gem 'voyager_helpers', git: 'git@github.com:pulibrary/voyager_helpers.git', :tag => 'v0.1.2'
 gem 'voyager_helpers', github: "pulibrary/voyager_helpers"
 # CUL local version?
 # gem 'voyager_helpers', path: '/Users/marquis/src/voyager_helpers'
 
+=======
+gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.3'
+>>>>>>> pulibrary/master
 gem 'responders', '~> 2.0'
 gem 'marc', '~> 1.0'
 gem 'rack-conneg', '~> 0.1.5'
