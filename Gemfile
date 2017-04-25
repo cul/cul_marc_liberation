@@ -18,7 +18,7 @@ end
 # CUL local version?
 # gem 'voyager_helpers', path: '/Users/marquis/src/voyager_helpers'
 
-# gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.3'
+gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.3'
 
 gem 'responders', '~> 2.0'
 gem 'marc', '~> 1.0'
@@ -52,7 +52,7 @@ group :development, :test do
   gem 'sqlite3'
 end
 
-# gem 'locations', github: "pulibrary/locations", tag: '0.5.0'
+gem 'locations', github: "pulibrary/locations", tag: '0.5.0'
 gem 'yaml_db', '~> 0.3.0'
 gem 'friendly_id', '~> 5.1.0'
 
@@ -63,7 +63,7 @@ gem 'poltergeist'
 gem 'resque'
 
 gem 'traject', '2.3.1'
-# gem 'stringex', github: "pulibrary/stringex", tag: 'vpton.2.5.2.2'
+gem 'stringex', github: "pulibrary/stringex", tag: 'vpton.2.5.2.2'
 gem 'library_stdnums'
 gem 'faraday'
 gem 'iso-639'
