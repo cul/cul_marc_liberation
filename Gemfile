@@ -1,5 +1,13 @@
 source 'https://rubygems.org'
 
+# suggestion from:
+#   https://github.com/bundler/bundler/blob/
+#      3e3f64f1166c4613329495459793dbd5a714efd3/lib/bundler/dsl.rb#L254
+git_source(:github) do |repo_name|
+  repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?("/")
+  "https://github.com/#{repo_name}.git"
+end
+
 gem 'rails', '~> 4.2'
 gem 'sass-rails', '~> 4.0.3'
 gem 'uglifier', '>= 1.3.0'
