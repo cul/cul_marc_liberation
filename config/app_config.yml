@@ -1,0 +1,6 @@
+_all_environments:
+
+  ldap_connection_details:
+    host: ldap.columbia.edu
+    port: 389
+    base: o=Columbia University, c=US

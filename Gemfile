@@ -47,6 +47,11 @@ group :development do
   # The `deploy:restart` hook for passenger applications is now in a separate gem
   # Just add it to your Gemfile and require it in your Capfile.
   gem 'capistrano-passenger'
+  
+  # CUL
+  # repl in browser on errors
+  gem 'better_errors'
+  gem 'binding_of_caller'
 end
 
 group :development, :test do
@@ -64,8 +69,15 @@ gem 'locations', github: "pulibrary/locations", tag: '0.5.0'
 gem 'yaml_db', '~> 0.3.0'
 gem 'friendly_id', '~> 5.1.0'
 
-gem 'devise', '~> 4.2'
-gem 'omniauth-cas'
+# gem 'devise', '~> 4.2'
+# gem 'omniauth-cas'
+# Columbia Authentication
+gem 'devise', '~> 3.0'
+gem 'cul_omniauth'
+
+# Columbia fetches user details from ldap
+gem 'net-ldap'
+
 gem 'capybara'
 gem 'poltergeist'
 gem 'resque'

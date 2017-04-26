@@ -5,7 +5,12 @@ class ApplicationController < ActionController::Base
   helper Locations::ApplicationHelper
   include ApplicationHelper
 
-  def after_sign_out_path_for(resource_or_scope)
-    request.referrer
-  end
+  # def after_sign_out_path_for(resource_or_scope)
+  #   request.referrer
+  # end
+
+  # Columbia Authentication
+  include Devise::Controllers::Helpers
+  devise_group :user, contains: [:user]
+
 end
