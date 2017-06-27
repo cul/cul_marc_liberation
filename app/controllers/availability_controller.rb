@@ -86,6 +86,18 @@ class AvailabilityController < ApplicationController
     'On-Site'
   end
 
+  def inaccessible_status
+    'Inaccessible'
+  end
+
+  def inaccessible_locations
+    %w(sci scith sciref scirefl scilaf scilal scimm)
+  end
+
+  def inaccessible?(code)
+    inaccessible_locations.include?(code)
+  end
+
   def order_status?(status)
     !order_statuses.select { |s| status.match(s) }.empty?
   end
@@ -122,10 +134,17 @@ class AvailabilityController < ApplicationController
   end
 
   def update_item_loc(item)
-    loc = get_holding_location(item[:temp_loc] || item[:location])
+    loc_code = item[:temp_loc] || item[:location]
+    loc = get_holding_location(loc_code)
     unless loc.nil?
       item[:label] = location_full_display(loc)
-      item[:status] = location_based_status(loc, item[:status])
+      unless order_status?(item[:status])
+        item[:status] = if inaccessible?(loc_code)
+          inaccessible_status
+        else
+          location_based_status(loc, item[:status])
+        end
+      end
     end
   end
 end
