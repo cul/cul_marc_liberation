@@ -26,7 +26,8 @@ end
 # CUL local version?
 # gem 'voyager_helpers', path: '/Users/marquis/src/voyager_helpers'
 
-gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.4'
+# gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.4'
+gem 'voyager_helpers', github: "pulibrary/voyager_helpers", branch: 'update_merge_holding_item'
 
 gem 'responders', '~> 2.0'
 gem 'marc', '~> 1.0'
