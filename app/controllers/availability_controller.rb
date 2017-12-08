@@ -39,6 +39,26 @@ class AvailabilityController < ApplicationController
           wants.json  { render json: MultiJson.dump(avail) }
         end
       end
+    elsif params[:barcodes]
+      scsb_lookup = ScsbLookup.new
+      avail = scsb_lookup.find_by_barcodes(sanitize_array(params[:barcodes]))
+      if avail.empty?
+        render plain: "SCSB Barcodes(s): #{params[:barcodes]} not found.", status: 404
+      else
+        respond_to do |wants|
+          wants.json  { render json: MultiJson.dump(avail) }
+        end
+      end
+    elsif params[:scsb_id]
+      scsb_lookup = ScsbLookup.new
+      avail = scsb_lookup.find_by_id(sanitize(params[:scsb_id]))
+      if avail.empty?
+        render plain: "SCSB Record: #{params[:scsb_id]} not found.", status: 404
+      else
+        respond_to do |wants|
+          wants.json  { render json: MultiJson.dump(avail) }
+        end
+      end
     else
       render plain: "Please provide a bib id.", status: 404
     end
@@ -82,20 +102,25 @@ class AvailabilityController < ApplicationController
     ['Order Received', 'Pending Order', 'On-Order']
   end
 
+  def not_charged
+    'Not Charged'
+  end
+
+  def hold_request
+    'Hold Request'
+  end
+
   def on_site
     'On-Site'
   end
 
-  def inaccessible_status
-    'Inaccessible'
-  end
-
-  def inaccessible_locations
-    %w(sci scith sciref scirefl scilaf scilal scimm)
-  end
-
-  def inaccessible?(code)
-    inaccessible_locations.include?(code)
+  # only recap non-aeon items retain the hold request status
+  def scsb_status(loc, status)
+    if loc.library.code == 'recap' && !loc.aeon_location
+      hold_request
+    else
+      not_charged
+    end
   end
 
   def order_status?(status)
@@ -120,10 +145,25 @@ class AvailabilityController < ApplicationController
     end
   end
 
+  def status_priority
+    ['Not Charged', 'Discharged', 'In Process', 'Hold Request', 'Charged', 'Renewed', 'Overdue',
+     'On Hold', 'In Transit', 'In Transit On Hold', 'In Transit Discharged', 'Withdrawn',
+     'Claims Returned', 'Lost--Library Applied', 'Missing', 'Lost--System Applied']
+  end
+
+  def display_status(status)
+    if status.is_a?(Array)
+      (status_priority & status).last
+    else
+      status
+    end
+  end
+
   # non-circulating items that are available should have status 'limited'
   # always requestable non-circulating items should always have 'limited' status,
   # even with unavailable Voyager status
   def location_based_status(loc, status)
+    status = scsb_status(loc, status) if status == 'Hold Request'
     if loc.always_requestable
       always_requestable_status(status)
     elsif !loc.circulates
@@ -134,16 +174,13 @@ class AvailabilityController < ApplicationController
   end
 
   def update_item_loc(item)
+    item[:status] = display_status(item[:status])
     loc_code = item[:temp_loc] || item[:location]
     loc = get_holding_location(loc_code)
     unless loc.nil?
       item[:label] = location_full_display(loc)
       unless order_status?(item[:status])
-        item[:status] = if inaccessible?(loc_code)
-          inaccessible_status
-        else
-          location_based_status(loc, item[:status])
-        end
+        item[:status] = location_based_status(loc, item[:status])
       end
     end
   end

@@ -10,14 +10,14 @@ require_relative './location_extract'
 require 'stringex'
 require 'library_stdnums'
 require 'time'
+
 extend Traject::Macros::Marc21Semantics
 extend Traject::Macros::MarcFormats
 
 settings do
-  provide "solr.url", "http://localhost:8983/solr/blacklight-core" # default
+  provide "solr.url", "http://localhost:8983/solr/blacklight-core-development" # default
   provide "solr.version", "4.10.0"
   provide "marc_source.type", "xml"
-  provide "solrj_writer.commit_on_close", "true"
   provide "solr_writer.max_skipped", "50"
   provide "marc4j_reader.source_encoding", "UTF-8"
   provide "log.error_file", "/tmp/error.log"
@@ -30,7 +30,8 @@ $LOAD_PATH.unshift(File.expand_path('../../', __FILE__)) # include marc_to_solr 
 
 
 to_field 'id', extract_marc('001', :first => true)
-
+# for scsb local system id
+to_field 'other_id_s', extract_marc('009', :first => true)
 to_field 'cjk_all', extract_all_marc_values
 
 # Author/Artist:
@@ -90,7 +91,7 @@ to_field 'title_display', extract_marc('245abcfghknps', :alternate_script => fal
 
 to_field 'title_a_index', extract_marc('245a', :trim_punctuation => true)
 
-to_field 'title_vern_display', extract_marc('245abcfghknps', :alternate_script => :only)
+to_field 'title_vern_display', extract_marc('245abcfghknps', :alternate_script => :only, :first => true)
 to_field 'cjk_title', extract_marc('245abcfghknps', :alternate_script => :only)
 
 # to_field 'title_sort', marc_sortable_title
@@ -191,6 +192,17 @@ end
 to_field 'cataloged_tdt', extract_marc('959a') do |record, accumulator|
   accumulator[0] = Time.parse(accumulator[0]).utc.strftime("%Y-%m-%dT%H:%M:%SZ") unless accumulator[0].nil?
 end
+
+# to_field 'cataloged_tdt' do |record, accumulator|
+#   extractor_doc_id =  MarcExtractor.cached("001")
+#   doc_id = extractor_doc_id.extract(record).first
+#   unless /^SCSB-\d+/ =~ doc_id
+#     #puts "#{record['001'].value}"
+#     extractor_959a  = MarcExtractor.cached("959a")
+#     cataloged_date = extractor_959a.extract(record).first
+#     accumulator[0] = Time.parse(cataloged_date).utc.strftime("%Y-%m-%dT%H:%M:%SZ") unless cataloged_date.nil?
+#   end
+# end
 
 
 # format - allow multiple - "first" one is used for thumbnail
@@ -532,15 +544,19 @@ to_field 'participant_performer_display', extract_marc('511a')
 #    546 XX 3a
 to_field 'language_display', extract_marc('5463ab')
 
-to_field "language_facet", marc_languages
+to_field 'language_facet', marc_languages
 
+to_field 'publication_place_facet', extract_marc('008[15-17]') do |record, accumulator|
+  places = accumulator.map { |c| Traject::TranslationMap.new('marc_countries')[c.strip] }
+  accumulator.replace(places.compact)
+end
 
 # Script:
 #    546 XX b
 to_field 'script_display', extract_marc('546b')
 
 to_field 'language_code_s', extract_marc('008[35-37]:041a:041d') do |record, accumulator|
-  codes = accumulator.map { |c| c.length == 3 ? c : c.scan(/.{1,3}/) }
+  codes = accumulator.compact.map { |c| c.length == 3 ? c : c.scan(/.{1,3}/) }
   accumulator.replace(codes.flatten.uniq)
 end
 # Contents:
@@ -841,6 +857,8 @@ to_field 'publisher_no_display', extract_marc('028a')
 to_field 'lccn_display', extract_marc('010a')
 to_field 'coden_display', extract_marc('030a')
 
+to_field 'standard_no_024_index', extract_marc('024a')
+
 to_field 'standard_no_1display' do |record, accumulator|
   standard_no = standard_no_hash(record)
   accumulator[0] = standard_no.to_json.to_s unless standard_no == {}
@@ -910,9 +928,20 @@ to_field 'holdings_1display' do |record, accumulator|
   end
 end
 
+## for recap notes
+to_field 'recap_notes_display' do |record, accumulator|
+  recap_notes = process_recap_notes(record)
+  unless recap_notes.empty?
+    recap_notes.each_with_index do |value, i|
+      accumulator[i] = value
+    end
+  end
+end
+
 each_record do |record, context|
   dissertation_note = context.output_hash['dissertation_notes_display']
   if dissertation_note && dissertation_note.first.downcase.gsub(/[^a-z]/, '').include?("seniorprincetonuniversity")
+    context.output_hash['format'] ||= []
     context.output_hash['format'] << Traject::TranslationMap.new("format")['ST']
   end
 end
@@ -932,6 +961,8 @@ each_record do |record, context|
   end
   unless location_codes.empty?
     location_codes.uniq!
+    ## need to through any location code that isn't from voyager, thesis, or graphic arts
+    ## issue with the ReCAP project records
     context.output_hash['location_code_s'] = location_codes
     context.output_hash['location'] = Traject::TranslationMap.new("location_display").translate_array(location_codes)
     mapped_codes = Traject::TranslationMap.new("locations")

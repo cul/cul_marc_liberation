@@ -8,8 +8,8 @@ git_source(:github) do |repo_name|
   "https://github.com/#{repo_name}.git"
 end
 
-gem 'rails', '~> 4.2'
-gem 'sass-rails', '~> 4.0.3'
+gem 'rails', '~> 5.1'
+gem 'sass-rails', '~> 5.0'
 gem 'uglifier', '>= 1.3.0'
 gem 'jquery-rails'
 gem 'turbolinks'
@@ -17,7 +17,9 @@ gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0', group: :doc
 gem 'mysql2'
 gem 'bootstrap-sass', '~> 3.3.3'
-gem 'high_voltage', '~> 2.2.1'
+gem 'high_voltage', '~> 3.0'
+gem 'loops', github: 'kovyrin/loops', branch: 'master'
+gem 'stomp'
 
 group :development, :production do
   gem 'ruby-oci8', '~> 2.2.1'
@@ -27,12 +29,12 @@ end
 # gem 'voyager_helpers', path: '/Users/marquis/src/voyager_helpers'
 
 # gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.4.4'
-gem 'voyager_helpers', github: "pulibrary/voyager_helpers", branch: 'update_merge_holding_item'
+gem 'voyager_helpers', github: "pulibrary/voyager_helpers", tag: 'v0.5.0'
+gem 'responders', '~> 2.3'
 
-gem 'responders', '~> 2.0'
 gem 'marc', '~> 1.0'
 gem 'rack-conneg', '~> 0.1.5'
-gem 'sinatra', '~> 1.4.5'
+gem 'sinatra', '~> 2.0'
 gem 'multi_json', '~> 1.10.1'
 gem 'oj'
 gem 'gyoku', '~> 1.0'
@@ -60,24 +62,30 @@ group :development, :test do
   gem 'rspec-rails', '~> 3.5'
   gem 'simplecov'
   gem 'byebug', '~> 3.5.1'
+  gem 'pry'
   gem 'rerun', '~> 0.10.0'
 
   # CUL - localhost development uses sqlite
   gem 'sqlite3'
+  gem 'webmock'
+  gem 'rails-controller-testing'
 end
 
-gem 'locations', github: "pulibrary/locations", tag: '0.5.0'
-gem 'yaml_db', '~> 0.3.0'
+gem 'locations', github: "pulibrary/locations", tag: 'v1.0.0'
+gem 'yaml_db', '~> 0.6.0'
 gem 'friendly_id', '~> 5.1.0'
 
 # gem 'devise', '~> 4.2'
 # gem 'omniauth-cas'
 # Columbia Authentication
-gem 'devise', '~> 3.0'
-gem 'cul_omniauth'
+# gem 'devise', '~> 3.0'
+# gem 'cul_omniauth'
+gem 'cul_omniauth', github: "cul/cul_omniauth", branch: 'rails-5'
+gem 'devise'
 
 # Columbia fetches user details from ldap
 gem 'net-ldap'
+
 
 gem 'capybara'
 gem 'poltergeist'
