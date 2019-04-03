@@ -81,7 +81,9 @@ gem 'friendly_id'
 # Columbia Authentication
 # gem 'devise', '~> 3.0'
 # gem 'cul_omniauth'
-gem 'cul_omniauth', github: "cul/cul_omniauth", branch: 'rails-5'
+# gem 'cul_omniauth', github: "cul/cul_omniauth", branch: 'rails-5'
+# gem 'cul_omniauth', path: '/Users/marquis/src/cul_omniauth'
+gem 'cul_omniauth', github: "cul/cul_omniauth", branch: 'cas-5.3'
 gem 'devise'
 
 # Columbia fetches user details from ldap
