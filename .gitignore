@@ -3,6 +3,7 @@
 /tmp
 /config/app_config.yml
 /config/database.yml
+/config/cas.yml
 /config/ip_whitelist.yml
 # Ignore everything
 /data/*

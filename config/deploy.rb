@@ -31,6 +31,7 @@ set :linked_files, %w{
   config/app_config.yml
   config/secrets.yml
   config/ip_whitelist.yml
+  config/cas.yml
 }
 # CUL - don't symlink these, deploy with repo
 #  config/initializers/voyager_helpers.rb
